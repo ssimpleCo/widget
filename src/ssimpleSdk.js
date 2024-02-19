@@ -42,7 +42,7 @@ class ssimpleWidget {
 		iframe.style.position = "fixed";
 		iframe.style.inset = "auto 15px 75px auto";
 		iframe.style.width = "420px";
-		iframe.style.height = "700px";
+		iframe.style.height = "70vh";
 		iframe.style.borderWidth = "1px";
 		iframe.style.borderRadius = "16px";
 		iframe.style.boxShadow = "rgba(0, 0, 0, 0.16) 0px 5px 40px";
