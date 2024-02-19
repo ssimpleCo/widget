@@ -1,6 +1,5 @@
 class ssimpleWidget {
 	init = ({ appId: clientId, btnColor }) => {
-		// this.clientId = clientId;
 		this.mountIframe(clientId, btnColor);
 	}
 
@@ -53,18 +52,11 @@ class ssimpleWidget {
 		iframe.style.visibility = "visible";
 		iframe.style.zIndex = "999999999";
 
-		// iframe.onload = () => {
-		// 	// this.iframe.contentWindow.postMessage({
-		// 	iframe.contentWindow.postMessage({
-		// 		type: 'INIT_IFRAME',
-		// 		value: { clientId }
-		// 		// value: { clientId: this.clientId }
-		// 	}, 'http://localhost:3000/widget');
-		// };
 		iframe.src = 'https://' + clientId + '.ssimple.co/widget';
+		// iframe.src = 'http://localhost:3000/widget';
 		iframe.crossorigin = "anonymous";
 		this.iframe = iframe;
-		// window.addEventListener("message", this.receiveMessage, false);
+		window.addEventListener("message", this.receiveMessage);
 
 		// create widget trigger button
 		const btn = document.createElement('button');
@@ -88,49 +80,84 @@ class ssimpleWidget {
 
 		document.head.insertAdjacentHTML("beforeend", styleTag);
 		document.body.appendChild(wrapper);
-	}
 
-	receiveMessage = (event) => {
-		// this is where we handle when our widget sends us a message
-		if (!!event && !!event.data && !!event.data.type) {
-			switch (event.data.type) {
-				case 'BOOTSTRAP_DONE':
-					this.handleBootstrapDone();
-					break;
-				default:
-					break;
+		// capture console messages
+		if (console.everything === undefined) {
+			console.everything = [];
+
+			window.onerror = function (error, url, line) {
+				console.everything.push({
+					type: "exception",
+					time_stamp: Date.now(),
+					value: [error]
+				});
+				return false;
 			}
+			window.onunhandledrejection = function (e) {
+				console.everything.push({
+					type: "promiseRejection",
+					time_stamp: Date.now(),
+					value: [e.reason]
+				});
+			}
+
+			function hookLogType(logType) {
+				const original = console[logType].bind(console);
+				return function () {
+					console.everything.push({
+						type: logType,
+						time_stamp: Date.now(),
+						value: Array.from(arguments)
+					});
+					original.apply(console, arguments);
+				}
+			}
+
+			['log', 'error', 'warn', 'debug'].forEach(logType => {
+				console[logType] = hookLogType(logType);
+			});
 		}
 	}
 
-	handleBootstrapDone = () => {
-		// const ssimpleApi = window.ssimple;
-		// these methods aren't filled out here, but you can
-		// imagine what they might do
-		// ssimpleApi.login = this.login;
-		// ssimpleApi.signup = this.signup;
-		// ssimpleApi.getCurrentUser = this.getCurrentUser;
-		// ssimpleApi.setAttribute = this.setAttribute;
-		// ssimpleApi.logout = this.logout;
-		// ssimpleApi.debug = this.debug;
-		// ssimpleApi._c = window.ssimple._c;
-		// this.runPriorCalls();
-		// window.ssimple = ssimpleApi;
-	}
+	receiveMessage = (event) => {
+		if (event.data !== 'capture') return;
+		const captureScreenshot = async () => {
+			const canvas = document.createElement("canvas");
+			const context = canvas.getContext("2d");
+			const video = document.createElement("video");
 
-	runPriorCalls = () => {
-		window.ssimple._c.forEach(([method, args]) => {
-			this[method].apply(this, args);
-		});
+			try {
+				this.iframe.style.display = "none";
+				this.btn.style.display = "none";
+				const stream = await navigator.mediaDevices.getDisplayMedia({ preferCurrentTab: true });
+
+				video.addEventListener("loadedmetadata", () => {
+					canvas.width = video.videoWidth / 2;
+					canvas.height = video.videoHeight / 2;
+
+					video.play();
+					context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, canvas.width, canvas.height);
+					stream.getTracks().forEach(track => track.stop());
+					const screenshot = canvas.toDataURL("image/png");
+
+					this.iframe.contentWindow.postMessage({ type: 'bug', payload: { console: console.everything, screenshot } }, '*');
+					this.iframe.style.display = "block";
+					this.btn.style.display = "inline-flex";
+				});
+
+				video.srcObject = stream;
+			} catch (err) {
+				this.iframe.style.display = "block";
+				this.btn.style.display = "inline-flex";
+				console.error("Error capturing screenshot: " + err);
+			}
+		};
+		captureScreenshot();
 	}
 }
 
 export default ((window) => {
 	const stubSdk = window.ssimple;
-
-	// _c is the real name for the _beforeLoadCallQueue
-	// const initCall = stubSdk._c.filter(call => call[0] === 'init');
 	const shim = new ssimpleWidget();
 	stubSdk.init = shim.init;
-	// initCall && shim.init(initCall[1]);
 })(global)
