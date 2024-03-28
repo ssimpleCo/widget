@@ -13,27 +13,18 @@ class ssimpleWidget {
 					z-index: 999999999 !important;
 				}
 				#ssimpleWidgetBtn {
-					box-sizing: border-box;
-					margin-left: auto;
-					margin-top: auto;
-					display: inline-flex;
-					height: 3rem;
-					width: 3rem;
-					align-items: center;
-					justify-content: center;
+					background-color: white;
+					padding: 0.25rem 0.75rem;
 					border-radius: 9999px;
-					color: white;
+					font-weight: bold;
+					color: ` + btnColor + `;
 					cursor: pointer;
-					background-color: ` + btnColor + `;
-					border-style: none;
+					border-color: ` + btnColor + `;
+					border-style: solid;
+					border-width: 2px;
 				}
       </style>
 		`;
-
-		const components = {
-			icon_close: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"></line><line x1="6" x2="18" y1="6" y2="18"></line></svg>`,
-			icon_report: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M 12 24 C 5.373 24 0 18.627 0 12 C 0 5.373 5.373 0 12 0 L 24 0 L 24 12 C 24 18.627 18.627 24 12 24 Z M 13.019 5.272 L 10.981 5.272 L 10.981 7.31 L 13.019 7.31 L 13.019 5.272 Z M 13.057 13.115 L 12.788 8.251 L 11.212 8.251 L 10.943 13.115 L 10.943 18.728 L 13.057 18.728 L 13.057 13.115 Z" style="fill: rgb(255, 255, 255); transform-origin: 12px 12px;" transform="matrix(-1, 0, 0, -1, 0.000001907349, 0.000001907349)"></path></svg>`,
-		};
 
 		// create iframe
 		const iframe = document.createElement('iframe');
@@ -61,13 +52,13 @@ class ssimpleWidget {
 		// create widget trigger button
 		const btn = document.createElement('button');
 		btn.id = "ssimpleWidgetBtn";
-		btn.innerHTML = components.icon_report;
+		btn.innerHTML = 'Feedback';
 		btn.addEventListener("click", () => {
-			if (btn.innerHTML === components.icon_report) {
-				btn.innerHTML = components.icon_close;
+			if (btn.innerHTML === 'Feedback') {
+				btn.innerHTML = 'Close';
 				iframe.style.display = "block";
 			} else {
-				btn.innerHTML = components.icon_report;
+				btn.innerHTML = 'Feedback';
 				iframe.style.display = "none";
 			}
 		});
